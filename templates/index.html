@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🧮 Smart Encryptor</title>
+<style>
+body {
+  background: linear-gradient(135deg, #000, #111);
+  color: #00ffaa;
+  font-family: "Poppins", sans-serif;
+  text-align: center;
+  padding: 40px;
+}
+.container {
+  background: #1b1b1b;
+  border-radius: 15px;
+  padding: 25px;
+  max-width: 650px;
+  margin: auto;
+  box-shadow: 0 0 25px #00ffaa55;
+}
+textarea, input, select {
+  width: 100%;
+  background: #000;
+  border: 1px solid #333;
+  color: #00ffaa;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+button {
+  background: #00ffaa;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: 0.2s;
+}
+button:hover { background: #00dd99; }
+#output {
+  background: #000;
+  color: #00ffaa;
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-size: 14px;
+  min-height: 60px;
+}
+#copyBtn {
+  display: none;
+  margin-top: 10px;
+  background: lime;
+  color: black;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 8px 20px;
+  cursor: pointer;
+}
+#copyBtn:hover { background: #5aff5a; }
+</style>
+</head>
+<body>
+  <h1>🧠 Smart Encryptor</h1>
+  <div class="container">
+    <form id="encForm">
+      <label>Enter Text:</label>
+      <textarea name="text" rows="3" placeholder="Enter text here..."></textarea>
+
+      <input type="file" name="file" id="fileInput" accept="*/*">
+
+      <label>Mode:</label>
+      <select name="mode" id="mode">
+        <option value="encrypt">Encrypt</option>
+        <option value="decrypt">Decrypt</option>
+      </select>
+
+      <label>Method:</label>
+      <select name="method">
+        <option value="xor">XOR Cipher (binary safe)</option>
+        <option value="caesar">Caesar Cipher (text only)</option>
+      </select>
+
+      <label>Key / Shift:</label>
+      <input type="text" name="key" required placeholder="Enter key or shift value">
+
+      <button type="submit">Run</button>
+    </form>
+
+    <div id="output">🧩 Output will appear here...</div>
+    <button id="copyBtn">📋 Copy Result</button>
+  </div>
+
+  <footer style="margin-top:25px;color:#777;">⚙️ Powered by C++ + Flask</footer>
+
+<script>
+const form = document.getElementById('encForm');
+const outputBox = document.getElementById('output');
+const copyBtn = document.getElementById('copyBtn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  outputBox.textContent = "⏳ Processing...";
+  copyBtn.style.display = "none";
+
+  const formData = new FormData(form);
+  const response = await fetch('/run', { method: 'POST', body: formData });
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const data = await response.json();
+    outputBox.textContent = data.output;
+    if (data.output && !data.output.startsWith("⚠️")) {
+      copyBtn.style.display = "inline-block";
+    }
+  } else {
+    // Binary file (auto download)
+    const blob = await response.blob();
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = response.headers.get("Content-Disposition").split("filename=")[1].replace(/"/g, "");
+    a.click();
+    URL.revokeObjectURL(url);
+    outputBox.textContent = "✅ File downloaded!";
+  }
+});
+
+copyBtn.addEventListener('click', async () => {
+  await navigator.clipboard.writeText(outputBox.textContent);
+  copyBtn.textContent = "✅ Copied!";
+  setTimeout(() => (copyBtn.textContent = "📋 Copy Result"), 1500);
+});
+</script>
+</body>
+</html>
